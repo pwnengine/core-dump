@@ -16,6 +16,13 @@ typedef struct {
   int flags;
 } entity_t;
 
+int patch(BYTE* address, BYTE* to_write, SIZE_T size) {
+  DWORD protect;
+  VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &protect);
+  memcpy(address, to_write, size);
+  VirtualProtect(address, size, protect, &protect);
+}
+
 void hack(HINSTANCE hinstDLL) {
   AllocConsole();
   FILE* fp = freopen("CONOUT$", "w+", stdout);
@@ -30,7 +37,7 @@ void hack(HINSTANCE hinstDLL) {
   
   /* main loop */
   for (;;) {
-    if(GetKeyState(VK_END) & 0x1000)
+    if(GetKeyState(VK_SPACE) & 0x1000)
       break;
 
     if(local_player.entity) {
@@ -38,8 +45,8 @@ void hack(HINSTANCE hinstDLL) {
       printf("local player health: %d\n", local_player.health);
 
       local_player.flags = *(int*)(local_player.entity + FLAGS);
-      if(GetAsyncKeyState(VK_SPACE) & 0x8000 && local_player.flags == 257) {
-	
+      if(GetAsyncKeyState(0x02) & 0x8000 && local_player.flags == 257) {
+	*(int*)(module + FORCEJUMP) = 2; // looking at how this works on cheat engine is kinda sussy baka im gonna have to look deeper as i forgot why this behavior occurs 
       }
     }
     
