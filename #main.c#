@@ -16,6 +16,11 @@ typedef struct {
   int flags;
 } entity_t;
 
+int patch(BYTE* address, BYTE* to_write, SIZE_T size) {
+  DWORD protect;
+  VirtualProtect(address, to_write, size, PAGE_EXECUTE_READWRITE, &protect);
+}
+
 void hack(HINSTANCE hinstDLL) {
   AllocConsole();
   FILE* fp = freopen("CONOUT$", "w+", stdout);
