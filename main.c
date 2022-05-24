@@ -1,27 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <windows.h>
-#define LPLAYER 0xDB75DC
-#define FLAGS 0x104
-#define HEALTH 0x100
-#define FORCEJUMP 0x527D360
-/*
-/  gcc -c -m32 -std=c99 -pedantic main.c
-/  gcc --shared -m32 -std=c99 -pedantic main.c -o cheat.dll
-*/
-
-typedef struct {
-  uintptr_t entity;
-  int health;
-  int flags;
-} entity_t;
-
-int patch(BYTE* address, BYTE* to_write, SIZE_T size) {
-  DWORD protect;
-  VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &protect);
-  memcpy(address, to_write, size);
-  VirtualProtect(address, size, protect, &protect);
-}
+#include "include.h"
+#include "structs.h"
+#include "entity/entity.h"
+#include "hacks/hacks.h"
 
 void hack(HINSTANCE hinstDLL) {
   AllocConsole();
@@ -29,25 +9,41 @@ void hack(HINSTANCE hinstDLL) {
 
   HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
   SetConsoleTextAttribute(hcon, 4);
-  printf("b1g hack! \n");
+  printf("b1g hack!\n");
 
-  uintptr_t module = (uintptr_t)GetModuleHandle("client.dll");
-  entity_t local_player = {0};
-  local_player.entity = *(uintptr_t*)(module + 0xDB75DC);
+  offsets_t offsets;
+  offsets.dw_entity_list = 0x4DD69DC;
+  offsets.dw_glow_object_manager = 0x531F608;
+  offsets.m_iglow_index = 0x10488;
+  offsets.dw_force_jump = 0x5280924;//0x527D360
+  offsets.dw_local_player = 0xDBA5BC;
+  offsets.m_fflags = 0x104;
+  offsets.m_ihealth = 0x100;
+  offsets.m_iteam_num = 0xF4;
+
+  entity_t lplayer;
+  game_t game;
+  game.game_module = (uintptr_t)GetModuleHandle("client.dll");
+  //uintptr_t client = game.module;
+  //local_player.entity = *(uintptr_t*)(client + LPLAYER);
+  //uintptr_t glow_manager = *(uintptr_t*)(game.game_module + 0x537E5F0);
+  //uintptr_t entity_list  = *(uintptr_t*)(client + ENTLIST);
+  //int local_team = *(int*)(lplayer.entity + 0xF4);
   
   /* main loop */
   for (;;) {
-    if(GetKeyState(VK_SPACE) & 0x1000)
+    if(GetKeyState(VK_END) & 0x1000)
       break;
 
-    if(local_player.entity) {
-      local_player.health = *(int*)(local_player.entity + HEALTH);
-      printf("local player health: %d\n", local_player.health);
+    if(lplayer.entity) {
+      printf("local player health: %d\n", lplayer.health);
+      
+      // hacks 
+      bhop(game.game_module, lplayer, offsets);
 
-      local_player.flags = *(int*)(local_player.entity + FLAGS);
-      if(GetAsyncKeyState(0x02) & 0x8000 && local_player.flags == 257) {
-	*(int*)(module + FORCEJUMP) = 2; // looking at how this works on cheat engine is kinda sussy baka im gonna have to look deeper as i forgot why this behavior occurs 
-      }
+    }
+    else {
+      local_player(game.game_module , &lplayer, offsets);
     }
     
     
