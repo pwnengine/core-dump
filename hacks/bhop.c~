@@ -1,8 +1,0 @@
-#include "bhop.h"
-
-void bhop(uintptr_t client, entity_t lplayer, offsets_t offsets) {
-  if(GetAsyncKeyState(VK_SPACE) & 0x8000 && lplayer.flags == 257) {
-    *(int*)(client + offsets.dw_force_jump) = 2;
-    printf("niggerererererererer\n");
-  }
-}
